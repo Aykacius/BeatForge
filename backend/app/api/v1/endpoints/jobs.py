@@ -1,35 +1,36 @@
-"""Job status tracking endpoint."""
+"""Job status endpoints."""
+
+import logging
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
+from app.models.schemas import JobStatusResponse
+from app.models.enums import JobStatusEnum
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class JobStatus(BaseModel):
-    """Job status information."""
-    job_id: str
-    status: str  # queued, processing, completed, failed
-    progress: int  # 0-100
-    current_step: str
-    message: str
+@router.get("/{job_id}", response_model=JobStatusResponse)
+async def get_job_status(job_id: UUID):
+    """Get status of a generation job.
 
-
-@router.get("/{job_id}", response_model=JobStatus)
-async def get_job_status(job_id: str):
-    """Get status of a beatmap generation job.
-    
     Args:
-        job_id: Job ID from generation request
-        
+        job_id: Job ID
+
     Returns:
-        Current job status and progress
+        Job status information
     """
-    # TODO: Fetch from database/cache
-    return JobStatus(
+    logger.info(f"Status query for job: {job_id}")
+
+    # TODO: Query from database
+    return JobStatusResponse(
         job_id=job_id,
-        status="processing",
-        progress=50,
-        current_step="Generating patterns",
-        message="Mapping engine is generating patterns based on audio analysis"
+        status=JobStatusEnum.COMPLETED,
+        progress=100,
+        current_stage="Completed",
+        estimated_time_remaining=None,
+        result={"beatmap_id": str(job_id)},
+        error_message=None,
     )

@@ -1,58 +1,59 @@
-"""File upload endpoint."""
+"""File upload endpoints."""
 
-import os
-import uuid
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from loguru import logger
+import logging
+from uuid import uuid4
+from pathlib import Path
+
+from fastapi import APIRouter, File, UploadFile, HTTPException
 
 from app.config import settings
+from app.models.schemas import UploadResponse
+from app.utils.exceptions import InvalidFileError, FileTooLargeError
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("/", response_model=UploadResponse)
 async def upload_file(file: UploadFile = File(...)):
-    """Upload an MP3 file for beatmap generation.
-    
+    """Upload MP3 file for beatmap generation.
+
     Args:
-        file: MP3 audio file (max 100MB)
-        
+        file: MP3 file to upload
+
     Returns:
-        Upload information including file_id
+        Upload response with song ID
     """
+    logger.info(f"File upload started: {file.filename}")
+
     # Validate file type
-    if not file.filename.endswith(".mp3"):
-        raise HTTPException(status_code=400, detail="Only MP3 files are supported")
+    if not file.content_type.startswith("audio/"):
+        logger.warning(f"Invalid file type: {file.content_type}")
+        raise InvalidFileError("File must be an audio file (MP3, WAV, OGG)")
 
-    # Create upload directory if it doesn't exist
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    # Validate file size
+    content = await file.read()
+    file_size = len(content)
 
-    # Generate unique file ID
-    file_id = str(uuid.uuid4())
-    file_path = os.path.join(settings.UPLOAD_DIR, f"{file_id}.mp3")
+    if file_size > settings.MAX_FILE_SIZE:
+        logger.warning(f"File too large: {file_size} > {settings.MAX_FILE_SIZE}")
+        raise FileTooLargeError(
+            f"File too large. Maximum size is {settings.MAX_FILE_SIZE / 1024 / 1024:.0f}MB"
+        )
 
-    try:
-        # Save uploaded file
-        contents = await file.read()
-        
-        if len(contents) > settings.MAX_UPLOAD_SIZE:
-            raise HTTPException(
-                status_code=413,
-                detail=f"File too large. Maximum size: {settings.MAX_UPLOAD_SIZE / 1024 / 1024}MB"
-            )
+    # Save file
+    song_id = uuid4()
+    upload_path = Path(settings.UPLOAD_TEMP_PATH) / f"{song_id}.mp3"
+    upload_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(file_path, "wb") as f:
-            f.write(contents)
+    with open(upload_path, "wb") as f:
+        f.write(content)
 
-        logger.info(f"File uploaded: {file_id} ({len(contents)} bytes)")
+    logger.info(f"File uploaded successfully: {song_id} ({file_size} bytes)")
 
-        return {
-            "file_id": file_id,
-            "filename": file.filename,
-            "size_bytes": len(contents),
-            "message": "File uploaded successfully"
-        }
-
-    except Exception as e:
-        logger.error(f"Upload error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to upload file")
+    return UploadResponse(
+        song_id=song_id,
+        filename=file.filename,
+        duration=0.0,  # TODO: Calculate from audio
+        file_size=file_size,
+    )

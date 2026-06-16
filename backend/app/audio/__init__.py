@@ -1,1 +1,1 @@
-"""Audio analysis module."""
+"""Audio analysis package."""

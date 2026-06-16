@@ -1,1 +1,1 @@
-"""Mapping engine module."""
+"""Mapping engine package."""

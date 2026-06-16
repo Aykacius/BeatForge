@@ -1,20 +1,25 @@
-"""Beatmap download endpoint."""
+"""Download endpoints."""
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+import logging
+from uuid import UUID
 
+from fastapi import APIRouter, FileResponse, HTTPException
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 @router.get("/{job_id}")
-async def download_beatmap(job_id: str):
-    """Download generated beatmap (.osz file).
-    
+async def download_beatmap(job_id: UUID):
+    """Download generated beatmap.
+
     Args:
-        job_id: Job ID from generation request
-        
+        job_id: Job ID
+
     Returns:
-        .osz file for download
+        OSZ file download
     """
-    # TODO: Fetch from output directory and verify completion
-    raise HTTPException(status_code=404, detail="Beatmap not found or still processing")
+    logger.info(f"Download request for job: {job_id}")
+
+    # TODO: Return actual OSZ file
+    raise HTTPException(status_code=404, detail="Beatmap not found")

@@ -1,1 +1,1 @@
-"""OSU file format module."""
+"""OSU file format handling."""

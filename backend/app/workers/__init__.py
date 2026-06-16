@@ -1,1 +1,1 @@
-"""Workers module."""
+"""Workers package."""

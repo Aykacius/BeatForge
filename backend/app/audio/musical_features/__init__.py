@@ -1,0 +1,1 @@
+"""Musical feature detection package."""

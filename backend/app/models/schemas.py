@@ -1,50 +1,64 @@
-"""SQLAlchemy ORM models."""
+"""Pydantic schemas for request/response validation."""
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, Boolean
-from sqlalchemy.sql import func
-from app.models.database import Base
+from datetime import datetime
+from uuid import UUID
+from typing import Optional, Any
 
+from pydantic import BaseModel, Field
 
-class Song(Base):
-    """Uploaded song model."""
-    __tablename__ = "songs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(String, unique=True, index=True)
-    filename = Column(String)
-    file_path = Column(String)
-    size_bytes = Column(Integer)
-    duration = Column(Float)
-    bpm = Column(Float, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
+from app.models.enums import DifficultyEnum, MappingStyleEnum, JobStatusEnum
 
 
-class GenerationJob(Base):
-    """Beatmap generation job model."""
-    __tablename__ = "generation_jobs"
+class UploadResponse(BaseModel):
+    """Response for file upload."""
 
-    id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(String, unique=True, index=True)
-    song_id = Column(Integer, index=True)
-    difficulty = Column(String)
-    mapping_style = Column(String)
-    target_star_rating = Column(Float)
-    status = Column(String)  # queued, processing, completed, failed
-    progress = Column(Integer, default=0)
-    output_path = Column(String, nullable=True)
-    error_message = Column(String, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
-    completed_at = Column(DateTime, nullable=True)
+    song_id: UUID
+    filename: str
+    duration: float
+    file_size: int
 
 
-class GeneratedBeatmap(Base):
-    """Generated beatmap model."""
-    __tablename__ = "generated_beatmaps"
+class GenerateRequest(BaseModel):
+    """Request for beatmap generation."""
 
-    id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(String, index=True)
-    osu_file_path = Column(String)
-    star_rating = Column(Float)
-    object_count = Column(Integer)
-    metadata = Column(JSON, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
+    song_id: UUID
+    difficulty: DifficultyEnum
+    mapping_style: MappingStyleEnum
+    target_star_rating: float = Field(ge=2.0, le=9.0)
+
+
+class GenerateResponse(BaseModel):
+    """Response for generation start."""
+
+    job_id: UUID
+    status: JobStatusEnum
+    created_at: datetime
+
+
+class JobStatusResponse(BaseModel):
+    """Response for job status query."""
+
+    job_id: UUID
+    status: JobStatusEnum
+    progress: int = Field(ge=0, le=100)
+    current_stage: Optional[str]
+    estimated_time_remaining: Optional[int]
+    result: Optional[dict[str, Any]]
+    error_message: Optional[str]
+
+
+class BeatmapMetadata(BaseModel):
+    """Beatmap metadata."""
+
+    title: str
+    artist: str
+    creator: str = "BeatForge AI"
+    version: str
+    bpm: float
+    drain_time: float
+    total_time: float
+    estimated_star_rating: float
+    object_count: int
+    circle_count: int
+    slider_count: int
+    spinner_count: int

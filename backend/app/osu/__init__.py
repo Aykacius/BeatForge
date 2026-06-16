@@ -1,0 +1,1 @@
+"""OSU file format module."""

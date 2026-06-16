@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply antialiased;
+}
+
+body {
+  @apply text-white;
+}
+
+.gradient-primary {
+  @apply bg-gradient-to-r from-pink-500 to-purple-600;
+}
+
+.card {
+  @apply bg-slate-800 border border-slate-700 rounded-lg shadow-lg;
+}
+
+.input-field {
+  @apply w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500;
+}
+
+.button-primary {
+  @apply px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200;
+}
+
+.button-secondary {
+  @apply px-6 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600 border border-slate-600 transition-all duration-200;
+}
+
+.progress-bar {
+  @apply w-full h-2 bg-slate-700 rounded-full overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full bg-gradient-to-r from-pink-500 to-purple-600 transition-all duration-500;
+}
